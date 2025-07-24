@@ -1,0 +1,35 @@
+
+name: LAMS fix
+
+on: [push]
+
+jobs:
+  lams_job:
+    runs-on: ubuntu-latest
+    name: LAMS LookML Linter Job
+    steps:
+      - name: Checkout your LookML
+        uses: actions/checkout@v3
+
+      - name: Fetch master branch
+        run: git fetch origin master
+
+      - name: Commit and push auto-fixed files if needed
+        env:
+          TOKEN: ${{ secrets.PAT_TOKEN_LOOKER_REPO }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          chmod +x .github/action_scripts/lams_indent_fixer.sh
+          .github/action_scripts/lams_indent_fixer.sh 
+
+      - name: Install GitHub CLI
+        run: sudo apt install gh
+
+      - name: Add label to PR
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN_LOOKER_REPO }}
+        run: |
+          PR_NUMBER=$(gh pr list --head "$GITHUB_REF_NAME" --json number -q '.[0].number')
+          echo "Found PR number: $PR_NUMBER"
+          gh pr edit "$PR_NUMBER" --add-label "auto-fix"
+
