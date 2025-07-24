@@ -1,9 +1,6 @@
-name: Fix LookML Indentation
+name: Fix LookML Indentation on PRs
 
 on:
-  push:
-    paths:
-      - '**/*.lkml'
   pull_request:
     paths:
       - '**/*.lkml'
@@ -14,15 +11,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout PR branch
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
 
-      - name: Run LookML indentation fixer (no package.json required)
+      - name: Run LookML indentation fixer
         run: |
           node <<'EOF'
           const fs = require("fs");
@@ -72,16 +72,14 @@ jobs:
           walkDir(".", fixIndentation);
           EOF
 
-      - name: Commit and push changes (if any)
+      - name: Commit and push changes to PR branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           if [[ `git status --porcelain` ]]; then
             git add .
             git commit -m "Auto-fix: LookML indentation (W1 rule)"
-            git pull --rebase origin ${GITHUB_REF#refs/heads/}
-            git push origin HEAD:DHUB-4098-adding-auto-fix-indentation-workflow
+            git push origin HEAD:${{ github.head_ref }}
           else
             echo "No indentation issues found. Nothing to commit."
           fi
-
