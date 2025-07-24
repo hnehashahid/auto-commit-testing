@@ -21,14 +21,35 @@ jobs:
         
       - name: Fetch master branch
         run: git fetch origin main
+        
+      - name: Get Only Edited Files
+        run: |
+          mkdir -p lint_dir
+          git diff --name-only --diff-filter=d origin/master | grep '\.lkml$' | xargs -I {} cp {} lint_dir
+          cp manifest.lkml lint_dir
+          ls -lrt lint_dir
 
-      - name: Commit and push auto-fixed files if needed
+      - name: Run LAMS Over the Edited Files
+        continue-on-error: true
+        id: lams
+        run: |
+          lams --output-mode=lines --reporting=save-no --source='./lint_dir/{*.lkml,manifest.lkml}' | tee lams_output.txt
+     
+      - name: Auto-fix W1 indentation errors in changed files
         env:
           TOKEN: ${{ secrets.PAT_TOKEN_LOOKER_REPO }}
           GH_REPO: ${{ github.repository }}
         run: |
           chmod +x .github/action_scripts/lams_indent_fixer.sh
           .github/action_scripts/lams_indent_fixer.sh 
+          
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v9
+        with:
+          author_name: Your Name
+          author_email: mail@example.com
+          message: 'Your commit message'
+          add: '*.lkml'
 
       - name: Install GitHub CLI
         run: sudo apt install gh
