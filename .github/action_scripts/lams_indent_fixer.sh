@@ -8,7 +8,7 @@ INDENT_SPACES=2
 mkdir -p lint_dir
 
 # Step 0: Get only changed LKML files
-git fetch origin master
+git fetch origin main
 CHANGED_FILES=$(git diff --name-only --diff-filter=d origin/main | grep '\.lkml$')
 
 if [[ -z "$CHANGED_FILES" ]]; then
