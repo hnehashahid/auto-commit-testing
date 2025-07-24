@@ -1,13 +1,6 @@
 name: LAMS
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    types:
-      - labeled
-
+on: push
 jobs:
   lams_job:
     runs-on: ubuntu-latest
