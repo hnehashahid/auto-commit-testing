@@ -1,49 +1,41 @@
+name: Fix LookML Indentation
 
-name: LAMS fix
-
-on: [push]
+on:
+  push:
+    paths:
+      - '**/*.lkml'
+  pull_request:
+    paths:
+      - '**/*.lkml'
 
 jobs:
-  lams_job:
+  auto-fix-indentation:
+    name: Auto-fix LookML Indentation (W1)
     runs-on: ubuntu-latest
-    name: LAMS LookML Linter Job
+
     steps:
-      - name: Checkout your LookML
+      - name: Checkout repository
         uses: actions/checkout@v3
-        
-      - name: Setup Node
+
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version: '20'
 
-      - name: Install LAMS
-        run: npm install -g @looker/look-at-me-sideways@v3
-        
-      - name: Fetch master branch
-        run: git fetch origin main
-     
-      - name: Auto-fix W1 indentation errors in changed files
-        env:
-          TOKEN: ${{ secrets.PAT_TOKEN_LOOKER_REPO }}
-          GH_REPO: ${{ github.repository }}
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run LookML indentation fixer
+        run: node fix-indentation.js
+
+      - name: Commit and push changes (if any)
         run: |
-          chmod +x .github/action_scripts/lams_indent_fixer.sh
-          .github/action_scripts/lams_indent_fixer.sh 
-          
-      - uses: EndBug/add-and-commit@v9
-        with:
-          message: Show GitHub Actions logo
-          committer_name: GitHub Actions
-          committer_email: actions@github.com
-
-      - name: Install GitHub CLI
-        run: sudo apt install gh
-
-      - name: Add label to PR
-        env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN_LOOKER_REPO }}
-        run: |
-          PR_NUMBER=$(gh pr list --head "$GITHUB_REF_NAME" --json number -q '.[0].number')
-          echo "Found PR number: $PR_NUMBER"
-          gh pr edit "$PR_NUMBER" --add-label "auto-fix"
-
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [[ `git status --porcelain` ]]; then
+            git add .
+            git commit -m "Auto-fix: LookML indentation (W1 rule)"
+            git push
+          else
+            echo "No changes to commit."
+          fi
