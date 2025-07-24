@@ -1,6 +1,14 @@
 name: LAMS
 
-on: push
+on:
+  push:
+    branches:
+      - '**' # Listen to all branches, including PR source branches
+    paths:
+      - '**/*.lkml'
+  pull_request:
+    paths:
+      - '**/*.lkml'
 jobs:
   lams_job:
     runs-on: ubuntu-latest
