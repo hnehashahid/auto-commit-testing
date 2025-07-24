@@ -79,7 +79,8 @@ jobs:
           if [[ `git status --porcelain` ]]; then
             git add .
             git commit -m "Auto-fix: LookML indentation (W1 rule)"
-            git push
+            git push origin HEAD:${GITHUB_REF#refs/heads/}
           else
             echo "No indentation issues found. Nothing to commit."
           fi
+
