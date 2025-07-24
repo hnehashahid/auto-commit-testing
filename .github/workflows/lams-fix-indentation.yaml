@@ -12,7 +12,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Fetch master branch
-        run: git fetch origin master
+        run: git fetch origin main
 
       - name: Commit and push auto-fixed files if needed
         env:
