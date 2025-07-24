@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+      - DHUB-4098-adding-auto-fix-indentation-workflow
   pull_request:
     branches:
       - main
