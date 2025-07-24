@@ -9,7 +9,7 @@ mkdir -p lint_dir
 
 # Step 0: Get only changed LKML files
 git fetch origin master
-CHANGED_FILES=$(git diff --name-only --diff-filter=d origin/master | grep '\.lkml$')
+CHANGED_FILES=$(git diff --name-only --diff-filter=d origin/main | grep '\.lkml$')
 
 if [[ -z "$CHANGED_FILES" ]]; then
  echo "No LookML files changed. Skipping LAMS check."
