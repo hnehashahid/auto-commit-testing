@@ -1,35 +1,85 @@
+name: Fix LookML Indentation on PRs
 
-name: LAMS fix
-
-on: [push]
+on:
+  pull_request:
+    paths:
+      - '**/*.lkml'
 
 jobs:
-  lams_job:
+  auto-fix-indentation:
+    name: Auto-fix LookML Indentation (W1)
     runs-on: ubuntu-latest
-    name: LAMS LookML Linter Job
+
     steps:
-      - name: Checkout your LookML
+      - name: Checkout PR branch
         uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Fetch master branch
-        run: git fetch origin main
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
 
-      - name: Commit and push auto-fixed files if needed
-        env:
-          TOKEN: ${{ secrets.PAT_TOKEN_LOOKER_REPO }}
-          GH_REPO: ${{ github.repository }}
+      - name: Run LookML indentation fixer
         run: |
-          chmod +x .github/action_scripts/lams_indent_fixer.sh
-          .github/action_scripts/lams_indent_fixer.sh 
+          node <<'EOF'
+          const fs = require("fs");
+          const path = require("path");
 
-      - name: Install GitHub CLI
-        run: sudo apt install gh
+          const INDENT_SIZE = 2;
+          const FILE_EXTENSION = ".lkml";
 
-      - name: Add label to PR
-        env:
-          GH_TOKEN: ${{ secrets.PAT_TOKEN_LOOKER_REPO }}
+          function walkDir(dir, callback) {
+            fs.readdirSync(dir).forEach(f => {
+              const fullPath = path.join(dir, f);
+              if (fs.statSync(fullPath).isDirectory()) {
+                walkDir(fullPath, callback);
+              } else if (fullPath.endsWith(FILE_EXTENSION)) {
+                callback(fullPath);
+              }
+            });
+          }
+
+          function fixIndentation(filePath) {
+            const lines = fs.readFileSync(filePath, "utf8").split("\n");
+            let indentLevel = 0;
+            let inMultilineComment = false;
+            const fixedLines = [];
+
+            for (let line of lines) {
+              const trimmed = line.trim();
+
+              if (trimmed.startsWith("/*")) inMultilineComment = true;
+              if (trimmed.endsWith("*/")) inMultilineComment = false;
+
+              if (inMultilineComment || trimmed === "") {
+                fixedLines.push(line);
+                continue;
+              }
+
+              if (trimmed.startsWith("}")) indentLevel = Math.max(indentLevel - 1, 0);
+              const newLine = " ".repeat(indentLevel * INDENT_SIZE) + trimmed;
+              fixedLines.push(newLine);
+              if (trimmed.endsWith("{")) indentLevel++;
+            }
+
+            fs.writeFileSync(filePath, fixedLines.join("\n"), "utf8");
+            console.log(`Fixed: ${filePath}`);
+          }
+
+          walkDir(".", fixIndentation);
+          EOF
+
+      - name: Commit and push changes to PR branch
         run: |
-          PR_NUMBER=$(gh pr list --head "$GITHUB_REF_NAME" --json number -q '.[0].number')
-          echo "Found PR number: $PR_NUMBER"
-          gh pr edit "$PR_NUMBER" --add-label "auto-fix"
-
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [[ `git status --porcelain` ]]; then
+            git add .
+            git commit -m "Auto-fix: LookML indentation (W1 rule)"
+            git push origin HEAD:${{ github.head_ref }}
+          else
+            echo "No indentation issues found. Nothing to commit."
+          fi

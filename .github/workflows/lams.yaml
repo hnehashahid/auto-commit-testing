@@ -3,11 +3,12 @@ name: LAMS
 on:
   push:
     branches:
-      - main
+      - '**' # Listen to all branches, including PR source branches
+    paths:
+      - '**/*.lkml'
   pull_request:
-    types:
-      - labeled
-
+    paths:
+      - '**/*.lkml'
 jobs:
   lams_job:
     runs-on: ubuntu-latest
@@ -20,3 +21,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '16.x'
+
+
+          
