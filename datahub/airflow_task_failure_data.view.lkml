@@ -1,7 +1,7 @@
 view: airflow_task_failure_data {
   sql_table_name: `fulfillment-dwh-staging.cl_datahub_services.task_final_state` ;;
   
-            dimension: project_id        { type: string sql: ${TABLE}.project_id ;; }
+  dimension: project_id        { type: string sql: ${TABLE}.project_id ;; }
   dimension: dag_id            { type: string sql: ${TABLE}.dag_id ;; }
   dimension: task_id           { type: string sql: ${TABLE}.task_id ;; }
   dimension: run_id            { type: string sql: ${TABLE}.run_id ;; }
