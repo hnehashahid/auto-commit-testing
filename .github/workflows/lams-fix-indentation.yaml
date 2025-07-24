@@ -22,11 +22,55 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install dependencies
-        run: npm install
+      - name: Run LookML indentation fixer (no package.json required)
+        run: |
+          node <<'EOF'
+          const fs = require("fs");
+          const path = require("path");
 
-      - name: Run LookML indentation fixer
-        run: node fix-indentation.js
+          const INDENT_SIZE = 2;
+          const FILE_EXTENSION = ".lkml";
+
+          function walkDir(dir, callback) {
+            fs.readdirSync(dir).forEach(f => {
+              const fullPath = path.join(dir, f);
+              if (fs.statSync(fullPath).isDirectory()) {
+                walkDir(fullPath, callback);
+              } else if (fullPath.endsWith(FILE_EXTENSION)) {
+                callback(fullPath);
+              }
+            });
+          }
+
+          function fixIndentation(filePath) {
+            const lines = fs.readFileSync(filePath, "utf8").split("\n");
+            let indentLevel = 0;
+            let inMultilineComment = false;
+            const fixedLines = [];
+
+            for (let line of lines) {
+              const trimmed = line.trim();
+
+              if (trimmed.startsWith("/*")) inMultilineComment = true;
+              if (trimmed.endsWith("*/")) inMultilineComment = false;
+
+              if (inMultilineComment || trimmed === "") {
+                fixedLines.push(line);
+                continue;
+              }
+
+              if (trimmed.startsWith("}")) indentLevel = Math.max(indentLevel - 1, 0);
+              const newLine = " ".repeat(indentLevel * INDENT_SIZE) + trimmed;
+              fixedLines.push(newLine);
+              if (trimmed.endsWith("{")) indentLevel++;
+            }
+
+            fs.writeFileSync(filePath, fixedLines.join("\n"), "utf8");
+            console.log(`Fixed: ${filePath}`);
+          }
+
+          walkDir(".", fixIndentation);
+          EOF
 
       - name: Commit and push changes (if any)
         run: |
@@ -37,5 +81,5 @@ jobs:
             git commit -m "Auto-fix: LookML indentation (W1 rule)"
             git push
           else
-            echo "No changes to commit."
+            echo "No indentation issues found. Nothing to commit."
           fi
