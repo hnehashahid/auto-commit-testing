@@ -1,7 +1,7 @@
 view: airflow_task_failure_data {
   sql_table_name: `fulfillment-dwh-staging.cl_datahub_services.task_final_state` ;;
   
-                dimension: project_id        { type: string sql: ${TABLE}.project_id ;; }
+  dimension: project_id        { type: string sql: ${TABLE}.project_id ;; }
   dimension: dag_id            { type: string sql: ${TABLE}.dag_id ;; }
   dimension: task_id           { type: string sql: ${TABLE}.task_id ;; }
   dimension: run_id            { type: string sql: ${TABLE}.run_id ;; }
@@ -9,7 +9,7 @@ view: airflow_task_failure_data {
   dimension: try_number        { type: number sql: ${TABLE}.try_number ;; }
   dimension: created_date      { type: date sql: ${TABLE}.created_date ;; }
   dimension: timestamp         { type: date sql: ${TABLE}.timestamp ;; }
-              dimension: airflow_link      { type: string sql: ${TABLE}.airflow_link ;; }
+  dimension: airflow_link      { type: string sql: ${TABLE}.airflow_link ;; }
   dimension: failure_root      { type: string sql: ${TABLE}.failure_root ;; }
   dimension: failure_reason    { type: string sql: ${TABLE}.failure_reason ;; }
   dimension: execution_number  { type: number sql: ${TABLE}.execution_number ;; }
